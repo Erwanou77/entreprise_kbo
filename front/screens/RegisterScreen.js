@@ -18,7 +18,7 @@ const RegisterScreen = ({ navigation }) => {
       setErrorMessage('Mot de passe invalide');
     }
     else {
-      result=await FetchService.get('/api/auth/register')
+      result=await FetchService.post('/api/auth/register', {"name": name,"email":email,"password": password})
       console.log(result);
       
       if (result == null){
