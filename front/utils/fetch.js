@@ -35,16 +35,20 @@ class FetchService {
   }
 
   // Método PUT
-  async put(url, data) {
+  async put(url, data,Bearer=null) {
     try {
+      let head={}
+      console.log(process.env.API_URI +url, data,Bearer);
+      head['Content-Type']='application/json'
+      if (Bearer){
+      head['Authorization']=`Bearer ${Bearer}`}
+      
       const response = await axios.put(process.env.API_URI +url, data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: head,
       });
       return response.data;
     } catch (error) {
-    //   console.error('Error en PUT:', error);
+      console.error('Error en PUT:', error);
       return null
     }
   }

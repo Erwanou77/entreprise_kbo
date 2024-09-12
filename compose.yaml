@@ -4,22 +4,11 @@ services:
     image: kbo-back:latest
     container_name: kbo-back-container
     ports:
-      - "3010:3000"
+      - "0.0.0.0:3010:3000"
     volumes:
       - ./back:/back
     networks:
       - internal
-
-  # frontend:
-  #   build: ./front
-  #   image: kbo-front:latest
-  #   container_name: kbo-front-container
-  #   ports:
-  #     - "5010:5000"
-  #   networks:
-  #     - internal
-  #   depends_on:
-  #     - backend
   
   mongodb:
     image: mongo:latest
