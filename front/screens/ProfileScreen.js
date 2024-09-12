@@ -1,24 +1,82 @@
 // screens/ProfileScreen.js
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert,TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { logout } from '../utils/auth';
+import FetchService from '../utils/fetch';
 
 // Define the Profile screen
-const ProfileTab = ({logoutHandler}) => {
-    const navigation = useNavigation();
+const ProfileTab = ({ logoutHandler }) => {
+  const navigation = useNavigation();
+  const [data, setData] = React.useState({});
+  const [edit, setEdit] = React.useState(false);
+  const [newData, setNewData] = React.useState({});
+
+  const userData = async () => {
+    try {
+      const user = JSON.parse(await AsyncStorage.getItem('user'));
+      if (user) {
+        setData({
+          mail: user.email,
+          'mot de passe': user.password,
+          pseudo: user.resultat.user.name,
+        });
+        setNewData({
+          mail: user.email,
+          'mot de passe': user.password,
+          pseudo: user.resultat.user.name,
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l’historique', error);
+    }
+  };
+
+  useEffect(() => {
+    userData();
+  }, []);
 
   const handleLogout = async () => {
     try {
       await logout();
-      logoutHandler()
+      logoutHandler();
       navigation.navigate('Login'); // Replace 'Login' with the actual route name for your login screen
     } catch (e) {
       console.log('Logout failed', e);
+    }
+  };
+
+  const handleEdit = () => {
+    setEdit(!edit);
+    // When entering edit mode, save current data
+    if (!edit) {
+      setNewData(data);
+    }
+  };
+
+  const handleChange = (key, value) => {
+    setNewData(prevData => ({
+      ...prevData,
+      [key]: value,
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      const r=JSON.parse(await AsyncStorage.getItem('user')).resultat
+      const userId = r.user['_id'];
+      resultat=await FetchService.put(`/api/user/${userId}`, JSON.stringify({"email":newData.mail,'password':newData["mot de passe"],'name':newData.pseudo,}),r.token);
+      if (resultat!=null) {
+        setData(newData);
+        setEdit(false);
+        
+      }
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des données', error);
     }
   };
 
@@ -31,14 +89,40 @@ const ProfileTab = ({logoutHandler}) => {
       <Text style={styles.title}>Profil de l'utilisateur</Text>
 
       {/* Additional Profile Information */}
-      <Text style={styles.subtitle}>Informations Utilisateur</Text>
-      <Text style={styles.info}>Nom: John Doe</Text>
-      <Text style={styles.info}>Email: john.doe@example.com</Text>
-
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Se Déconnecter</Text>
-      </TouchableOpacity>
+      <Text style={styles.subtitle}>Informations de l'Utilisateur</Text>
+      {Object.entries(data).map(([key, value]) => (
+        <View key={key}>
+            <Text style={styles.info}>{key}
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder={key}
+              value={newData[key] || value}
+              onChangeText={(text) => handleChange(key, text)}
+              autoCapitalize="none"
+              editable={edit}
+            />
+        </View>
+      ))}
+      {edit ? (
+        <>
+          <TouchableOpacity style={styles.editButton} onPress={handleSave}>
+            <Text style={styles.editButtonText}>Sauvegarder</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+            <Text style={styles.editButtonText}>Annuler</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <>
+          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+            <Text style={styles.editButtonText}>Modifier</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutButtonText}>Se Déconnecter</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 };
@@ -239,6 +323,17 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   logoutButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  editButton: {
+    backgroundColor: '#3399ff',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  editButtonText: {
     color: 'white',
     fontWeight: '600',
     textAlign: 'center',

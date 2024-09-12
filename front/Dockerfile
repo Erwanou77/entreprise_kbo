@@ -1,4 +1,5 @@
-FROM node:22.4-alpine
+FROM node:20.17.0-alpine
+
 
 WORKDIR /front
 
@@ -8,4 +9,4 @@ RUN npm install
 
 EXPOSE 5000
 
-CMD ["npm", "run", "start"]
+CMD ["npx","expo","start"]

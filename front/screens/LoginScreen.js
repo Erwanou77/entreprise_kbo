@@ -15,7 +15,7 @@ const LoginScreen = ({ navigation, setIsAuthenticated }) => {
         console.log(resultat);
         
         setErrorMessage('');
-        const user = { email, password };
+        const user = { email, password , "resultat":resultat };
         await login(user); // Save login status using async storage
         setIsAuthenticated(true); // Update the auth status
         navigation.navigate('KBO'); // Redirect to dashboard
