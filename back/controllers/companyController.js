@@ -1,4 +1,5 @@
 const Enterprise = require('../models/company');
+const scrapeCompanyData = require('../scrap');
 
 const searchByNumber = async (req, res) => {
   const { searchQuery } = req.query;
@@ -11,7 +12,7 @@ const searchByNumber = async (req, res) => {
     const enterprises = await Enterprise.findOne({
       entity_number: { $regex: searchQuery, $options: 'i' }
     });
-    const company = await scrapeCompanyData(req.params.searchQuery.replaceAll(".",""));
+    const company = await scrapeCompanyData(searchQuery.replaceAll(".",""));
     
     res.status(200).json({db:enterprises, scrapping:company});
   } catch (error) {
