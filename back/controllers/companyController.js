@@ -8,8 +8,9 @@ const searchByNumber = async (req, res) => {
   }
 
   try {
-    const enterprises = await Enterprise.find();
-    console.log('Test réussi %d', enterprises);
+    const enterprises = await Enterprise.findOne({
+      entity_number: { $regex: searchQuery, $options: 'i' }
+    });
     
     res.status(200).json(enterprises);
   } catch (error) {
