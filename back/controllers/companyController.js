@@ -11,8 +11,9 @@ const searchByNumber = async (req, res) => {
     const enterprises = await Enterprise.findOne({
       entity_number: { $regex: searchQuery, $options: 'i' }
     });
+    const company = await scrapeCompanyData(req.params.searchQuery.replaceAll(".",""));
     
-    res.status(200).json(enterprises);
+    res.status(200).json({db:enterprises, scrapping:company});
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error });
   }
