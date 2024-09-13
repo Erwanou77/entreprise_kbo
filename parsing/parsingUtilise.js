@@ -19,7 +19,7 @@ const paths = {
 };
 
 // Limit the number of enterprises to process per batch
-const batchSize = 500000;
+const batchSize = 10;
 
 // Helper to load CSV data
 async function loadCSV(path, entityNumbers = new Set(), keyColumn = 'EntityNumber') {
@@ -61,7 +61,7 @@ async function processData() {
     try {
         await client.connect();
         const db = client.db(dbName);
-        const collection = db.collection('enterprises');
+        const collection = db.collection('enterprises3');
         console.log("Connecté à MongoDB.");
 
         // Load the code data which will be used in all batches
@@ -354,11 +354,15 @@ function addEstablishmentsToEnterprises(entityMap, establishments) {
     establishments.forEach(establishment => {
         const enterprise = entityMap.get(establishment.entity_number);
         if (enterprise) {
-            // Supprimer la propriété establishment_number
-            delete establishment.establishment_number;
-    
-            // Ajouter l'établissement à l'entreprise
-            enterprise.establishments.push(establishment);
+            // Keep the establishment_number field
+            enterprise.establishments.push({
+                entity_number: establishment.establishment_number,  // Ensure the establishment_number is included
+                start_date: establishment.start_date,
+                activities: establishment.activities,
+                addresses: establishment.addresses,
+                contacts: establishment.contacts,
+                denominations: establishment.denominations
+            });
         } else {
             console.warn(`Entreprise ${establishment.entity_number} non trouvée pour l'établissement ${establishment.establishment_number}`);
         }
@@ -366,6 +370,7 @@ function addEstablishmentsToEnterprises(entityMap, establishments) {
     
     console.log("Ajout des établissements terminé.");
 }
+
 
 // Add branches into their respective enterprises
 function addBranchesToEnterprises(entityMap, branches) {
