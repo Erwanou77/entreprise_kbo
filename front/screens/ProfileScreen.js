@@ -182,12 +182,14 @@ const HistoryTab = () => {
   );
 };
 
-const FavorisTab = () => {
+const FavorisTab = ({ navigation }) => {
   const [favoris, setFavoris] = React.useState([]);
 
   const fetchFavoris = async () => {
     try {
       const history = await AsyncStorage.getItem('favoris');
+      console.log(history);
+      
       if (history) {
         setFavoris(JSON.parse(history));
       }
@@ -233,7 +235,7 @@ const FavorisTab = () => {
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
             <View style={styles.historyItemContainer}>
-              <Text style={styles.historyItem}>{item}</Text>
+              <Text style={styles.historyItem} onPress={()=>navigation.navigate('Enterprise', { enterprise: item })}>{item.denominations ? (item.denominations[1] ? item.denominations[1].denomination : item.denominations[0].denomination) : item["entity_number"]}</Text>
               <TouchableOpacity onPress={() => handleDelete(item)}>
                 <Ionicons name="trash-bin" size={24} color="red" />
               </TouchableOpacity>

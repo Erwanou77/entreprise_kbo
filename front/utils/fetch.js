@@ -2,14 +2,23 @@ import axios from 'axios';
 
 class FetchService {
   // Método GET
-  async get(url) {
+  async get(url,Bearer=null) {
     try {
-        console.log(process.env.API_URI +url);
-        
-      const response = await axios.get(process.env.API_URI +url);
+      
+      let head={}
+      console.log(process.env.API_URI +url,Bearer);
+      head['Content-Type']='application/json'
+      if (Bearer){
+      head['Authorization']=`Bearer ${Bearer}`}
+      
+      const response = await axios.get(process.env.API_URI +url, {
+        headers: head,
+      });
+      console.log(response.data);
+      
       return response.data; // Axios devuelve los datos en la propiedad 'data'
     } catch (error) {
-    //   console.error('Error en GET:', error);
+      console.error('Error en GET:', error);
       return null
     }
   }

@@ -19,6 +19,24 @@ services:
       - mongodata:/data/db
     networks:
       - internal
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "28081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+    depends_on:
+      - mongodb
+    networks:
+      - internal
 
 volumes:
   mongodata:
