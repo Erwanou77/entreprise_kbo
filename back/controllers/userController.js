@@ -24,14 +24,20 @@ const getUserById = async (req, res) => {
 // Mettre à jour un utilisateur
 const updateUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { name, email, password },
-      { new: true, runValidators: true }
-    );
-    if (!updatedUser) return res.status(404).json({ error: 'User not found' });
-    res.status(200).json(updatedUser);
+    let user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    Object.assign(user, req.body);
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'L\'utilisateur a bien été modifié',
+      updatedUser: user,
+    });
   } catch (err) {
     res.status(400).json({ error: 'Failed to update user', details: err });
   }
