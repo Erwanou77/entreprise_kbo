@@ -1,92 +1,34 @@
 const Enterprise = require('../models/company');
 const scrapeCompanyData = require('../scrap');
 
-const searchByNumber = async (req, res) => {
-  const { searchQuery } = req.query;
-
-  if (!searchQuery) {
-    return res.status(400).json({ message: 'La recherche est obligatoire' });
-  }
-
+const search = async (req, res) => {
+  const { page = 1, limit = 10, searchQuery, searchField } = req.query;
+  const searchRegex = { $regex: searchQuery, $options: 'i' };
   try {
-    const enterprises = await Enterprise.findOne({
-      entity_number: { $regex: searchQuery, $options: 'i' }
-    });
-    const company = await scrapeCompanyData(searchQuery.replaceAll(".",""));
+
+    const searchFields = {
+      "1": { entity_number: searchRegex },
+      "2": { "denominations.denomination": searchRegex },
+      "3": { $or: [{ "activities.activity_group": searchRegex }, { "activities.nace_description": searchRegex }] },
+      "4": { $or: [{ "addresses.zipcode": searchRegex }, { "addresses.municipality": searchRegex }] }
+    };
+
+    if (!searchFields[searchField]) {
+      return res.status(400).json({ message: 'Champ de recherche invalide.' });
+    }
     
-    res.status(200).json({db:enterprises, scrapping:company});
+    const enterprises = await Enterprise.find(searchFields[searchField])
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const company = await scrapeCompanyData(searchQuery.replaceAll(".",""));
+
+    const additionalData = searchField === "1" ? { scrapping: company }: {};
+
+    res.status(200).json({ data: enterprises, total: enterprises.length, currentPage: page, ...additionalData });
   } catch (error) {
-    res.status(500).json({ message: 'Server Error', error });
+    res.status(500).json({ message: error.message });
   }
 };
 
-const searchByDenomination = async (req, res) => {
-  const { searchQuery } = req.query;
-
-  if (!searchQuery) {
-    return res.status(400).json({ message: 'La recherche est obligatoire' });
-  }
-
-  try {
-    const enterprises = await Enterprise.find({
-      "denominations.denomination": { $regex: searchQuery, $options: 'i' }
-    });
-    res.status(200).json(enterprises);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error });
-  }
-};
-
-const searchByActivity = async (req, res) => {
-  const { searchQuery } = req.query;
-
-  if (!searchQuery) {
-    return res.status(400).json({ message: 'La recherche est obligatoire' });
-  }
-
-  try {
-    const enterprises = await Enterprise.find({
-      $or: [
-        { "activities.activity_group": { $regex: searchQuery, $options: 'i' } },
-        { "activities.nace_description": { $regex: searchQuery, $options: 'i' } }
-      ]
-    });
-    res.status(200).json(enterprises);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error });
-  }
-};
-
-const searchByAddress = async (req, res) => {
-  const { searchQuery } = req.query;
-
-  if (!searchQuery) {
-    return res.status(400).json({ message: 'La recherche est obligatoire' });
-  }
-
-  try {
-    const enterprises = await Enterprise.find({
-      $or: [
-        { "addresses.zipcode": { $regex: searchQuery, $options: 'i' } },
-        { "addresses.municipality": { $regex: searchQuery, $options: 'i' } }
-      ]
-    });
-    res.status(200).json(enterprises);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error });
-  }
-};
-
-// Récupérer les détails d'une entreprise par ID
-const getCompanyById = async (req, res) => {
-  try {
-    const company = await Enterprise.collection('enterprise').findOne({ _id: req.params.id });
-    if (!company) return res.status(404).json({ message: 'Entreprise pas trouvé' });
-
-    res.status(200).json(company);
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error });
-  }
-};
-
-module.exports = { searchByNumber, searchByDenomination, searchByActivity, searchByAddress, getCompanyById };
+module.exports = { search };
