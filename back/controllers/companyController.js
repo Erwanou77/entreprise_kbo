@@ -19,12 +19,23 @@ const search = async (req, res) => {
     
     const enterprises = await Enterprise.find(searchFields[searchField]).limit(limit * 1).skip((page - 1) * limit);
 
-    const additionalData = searchField === "1" ? { scrapping: await scrapeCompanyData(searchQuery.replaceAll(".","")) } : {};
-
-    res.status(200).json({ data: enterprises, total: enterprises.length, currentPage: page, ...additionalData });
+    res.status(200).json({ data: enterprises, total: enterprises.length, currentPage: page });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-module.exports = { search };
+const details = async (req, res) => {
+  const { entity_number } = req.query;
+  try {
+    const company = await scrapeCompanyData(entity_number.replaceAll(".",""));
+
+    // const enterprises = await Enterprise.find({ entity_number: { $regex: entity_number, $options: 'i' } })
+
+    res.status(200).json({data: company});
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+module.exports = { search, details };
