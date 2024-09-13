@@ -17,13 +17,9 @@ const search = async (req, res) => {
       return res.status(400).json({ message: 'Champ de recherche invalide.' });
     }
     
-    const enterprises = await Enterprise.find(searchFields[searchField])
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    const enterprises = await Enterprise.find(searchFields[searchField]).limit(limit * 1).skip((page - 1) * limit);
 
-    const company = await scrapeCompanyData(searchQuery.replaceAll(".",""));
-
-    const additionalData = searchField === "1" ? { scrapping: company }: {};
+    const additionalData = searchField === "1" ? { scrapping: await scrapeCompanyData(searchQuery.replaceAll(".","")) } : {};
 
     res.status(200).json({ data: enterprises, total: enterprises.length, currentPage: page, ...additionalData });
   } catch (error) {
